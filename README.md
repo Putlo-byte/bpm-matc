@@ -10,9 +10,10 @@ of how the track actually goes.
 - Real 30-second song previews stream from the free **Apple / iTunes Search API** (no key needed).
 - The slider changes playback tempo (pitch preserved), so it's a true BPM shift.
 - Each round you have **20 seconds** before it auto-locks.
-- **Scoring:** within 1% = full points + 🎆 fireworks; 1–10% = scaled points;
-  10–30% = no points; over 30% = penalty. Results show your accuracy to two decimals
-  (e.g. `97.68%`) — green if you scored, red if you didn't.
+- **Scoring:** a steep, generous curve rewards high accuracy — up to ~250 points
+  (96% ≈ 194, 92% ≈ 112), so one great guess can swing a match. 70–90% = no points,
+  below 70% = penalty, and ≤1% off triggers 🎆 fireworks. Results show your accuracy to
+  two decimals (e.g. `97.68%`) — green if you scored, red if you didn't.
 - The song pool is effectively endless (pulled live from a rotating set of popular artists)
   and rarely repeats.
 

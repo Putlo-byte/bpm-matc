@@ -850,16 +850,10 @@
     slider.disabled = true; lockBtn.disabled = true;
     const err = Math.abs(parseFloat(slider.value) - targetPos); // ≈ % tempo off
 
-    // ----- point system -----
-    // ≤1% : full points (+ celebration).  1–10% : scaled points.
-    // 10–30% : zero.  >30% : penalty (minus points).
-    let pts, perfect = false;
-    if (err <= 1)        { pts = 100; perfect = true; }
-    else if (err <= 10)  { pts = Math.round(100 - (err - 1) * 10); }      // 90 → 10 across 1–10%
-    else if (err <= 30)  { pts = 0; }
-    else                 { pts = -Math.min(60, Math.round((err - 30) * 2)); } // penalty grows past 30%
-
-    if (err <= 10){ streak++; pts += Math.min(streak,5) * (perfect ? 5 : 2); } else streak = 0;
+    // ----- point system (steep high-accuracy reward; see scoreFor) -----
+    let pts = scoreFor(err);
+    const perfect = err <= 1;
+    if (err <= 10){ streak++; pts += Math.min(streak, 5) * (perfect ? 5 : 2); } else streak = 0;
     score += pts; scoreEl.textContent = score; streakEl.textContent = streak;
 
     // ----- result readout: an accuracy %, green if scored / red if not -----
@@ -1301,10 +1295,11 @@
   mpLockBtn.onclick = mpLockIn;
 
   function scoreFor(err){
-    if(err <= 1) return 100;
-    if(err <= 10) return Math.round(100 - (err - 1) * 10);
-    if(err <= 30) return 0;
-    return -Math.min(60, Math.round((err - 30) * 2));
+    // steep, generous reward for high accuracy so one great guess can swing a match.
+    // err 0→250, 1→237, 4(96%)→194, 5(95%)→177, 8(92%)→112, 10(90%)→0.
+    if(err <= 10) return Math.round(250 * Math.sqrt(1 - err / 10));
+    if(err <= 30) return 0;                                  // 70–90%: no points
+    return -Math.min(60, Math.round((err - 30) * 2));        // <70%: penalty
   }
 
   function revealRound(r, mine, theirs, target){
