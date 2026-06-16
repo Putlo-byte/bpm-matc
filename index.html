@@ -156,7 +156,7 @@
     background: rgba(0,0,0,0.25); border: 1px solid var(--stroke); border-radius: 14px; padding: 12px 18px; }
   .mpTeam { text-align: center; min-width: 78px; } .mpTeam b { display: block; font-size: 26px; font-weight: 800; line-height: 1.1; }
   .mpTeam span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
-  .mpTeam.you b { color: var(--accent); } .mpTeam.opp b { color: var(--accent2); }
+  .mpTeam.you b { color: var(--good); } .mpTeam.opp b { color: var(--bad); }
   .mpRoundLabel { font-size: 13px; font-weight: 700; color: var(--muted); }
 
   /* ===== MP reveal ===== */
@@ -165,7 +165,7 @@
     background: linear-gradient(90deg, #1b2440, #2a3556); border: 1px solid var(--stroke); }
   .revMark { position: absolute; top: 50%; transform: translate(-50%,-50%); }
   .revMark.dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
-  .revMark.you { background: var(--accent); } .revMark.opp { background: var(--accent2); }
+  .revMark.you { background: var(--good); } .revMark.opp { background: var(--bad); }
   .revMark.target { font-size: 22px; }
   .revMark .tag { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); font-size: 10px; white-space: nowrap; font-weight: 700; }
   .revLabels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 6px; }
@@ -495,8 +495,8 @@
   <div id="mpReveal" hidden>
     <div class="revealTrack">
       <div class="revMark target" id="revTarget" title="Original tempo">🎯<span class="tag" style="color:var(--text)">Original</span></div>
-      <div class="revMark dot you" id="revYou"><span class="tag" style="color:var(--accent)">You</span></div>
-      <div class="revMark dot opp" id="revOpp"><span class="tag" style="color:var(--accent2)">Opp</span></div>
+      <div class="revMark dot you" id="revYou"><span class="tag" style="color:var(--good)">You</span></div>
+      <div class="revMark dot opp" id="revOpp"><span class="tag" style="color:var(--bad)">Opp</span></div>
     </div>
     <div class="revLabels"><span>🐢 Slower</span><span>Faster 🐇</span></div>
     <div class="revStats" id="revStats"></div>
@@ -1315,10 +1315,10 @@
     const fmt = p => (p >= 0 ? "+" : "") + p + " pts";
     const oppNm = (M && M.oppName) || "Opponent";
     revStats.innerHTML =
-      `<div class="revCol"><div class="who" style="color:var(--accent)">You</div>` +
-      `<div class="acc" style="color:var(--accent)">${mine.acc.toFixed(2)}%</div><div class="pts">${fmt(mine.pts)}</div></div>` +
-      `<div class="revCol"><div class="who" style="color:var(--accent2)">${oppNm}</div>` +
-      `<div class="acc" style="color:var(--accent2)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}</div></div>`;
+      `<div class="revCol"><div class="who" style="color:var(--good)">You</div>` +
+      `<div class="acc" style="color:var(--good)">${mine.acc.toFixed(2)}%</div><div class="pts">${fmt(mine.pts)}</div></div>` +
+      `<div class="revCol"><div class="who" style="color:var(--bad)">${oppNm}</div>` +
+      `<div class="acc" style="color:var(--bad)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}</div></div>`;
     const w = mine.acc > theirs.acc ? 'you' : (theirs.acc > mine.acc ? 'opp' : 'tie');
     revWinner.textContent = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? `${oppNm} takes this round` : "Round tied";
     revWinner.style.color = w === 'you' ? "var(--good)" : w === 'opp' ? "var(--bad)" : "var(--muted)";
@@ -1353,7 +1353,7 @@
     else { txt = "It's a Tie!"; color = "var(--warn)"; outcome = 'tie'; }
     finalWinner.textContent = txt; finalWinner.style.color = color;
     const oppNm = (M && M.oppName) || "Opponent";
-    finalScores.innerHTML = `You <b style="color:var(--accent)">${t.y}</b> &nbsp;—&nbsp; <b style="color:var(--accent2)">${t.o}</b> ${oppNm}`;
+    finalScores.innerHTML = `You <b style="color:var(--good)">${t.y}</b> &nbsp;—&nbsp; <b style="color:var(--bad)">${t.o}</b> ${oppNm}`;
     M.finished = true;
     recordResult(outcome);
   }
