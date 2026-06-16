@@ -1,4 +1,4 @@
-# 🎚️ BPM Match
+# 🎚️ Beat Matchers
 
 A browser game: a popular song plays at the **wrong tempo**, and you drag a slider
 to restore it to its real speed — by ear. No meter, no hints; you trust your memory
