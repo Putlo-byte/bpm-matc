@@ -630,19 +630,24 @@
     slider.style.setProperty("--p", pct + "%");
   }
 
-  // Apply tempo changes at most once per animation frame. Setting playbackRate
-  // dozens of times per drag can stall audio on slower machines/browsers.
-  let _pendingRate = null, _rateRAF = 0;
+  // Safari stalls audio on every playbackRate change while playing, so on Safari we
+  // debounce the tempo change (apply once the drag settles / on release) instead of
+  // updating continuously. Other browsers update live, throttled to one frame.
+  const isSafari = !!(navigator.vendor && navigator.vendor.indexOf('Apple') > -1 &&
+                      navigator.userAgent && !/CriOS|FxiOS|Chrome|Chromium|Edg/.test(navigator.userAgent));
+  let _pendingRate = null, _rateRAF = 0, _rateTimer = 0;
+  function _flushRate(){ if(_pendingRate != null && ready){ try { player.playbackRate = _pendingRate; } catch(e){} } }
   function applyRate(){
     if(!ready) return;
     _pendingRate = rateFromPos(parseFloat(slider.value));
-    if(!_rateRAF){
-      _rateRAF = requestAnimationFrame(() => {
-        _rateRAF = 0;
-        if(_pendingRate != null && ready){ try { player.playbackRate = _pendingRate; } catch(e){} }
-      });
+    if(isSafari){
+      clearTimeout(_rateTimer);
+      _rateTimer = setTimeout(_flushRate, 90);
+    } else if(!_rateRAF){
+      _rateRAF = requestAnimationFrame(() => { _rateRAF = 0; _flushRate(); });
     }
   }
+  slider.addEventListener('change', _flushRate); // apply immediately when the fader is released
 
   // ---------- Detent "haptic-ish" feedback on slider movement ----------
   // NOTE: browsers can't drive the Mac trackpad Taptic Engine, so this fakes the
