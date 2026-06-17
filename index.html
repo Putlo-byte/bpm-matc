@@ -380,7 +380,15 @@
     .result .verdict{ font-size: 32px; }
     .stage{ min-height: 0; }
     .hint{ font-size: 11px; }
-    .modeBtn{ min-width: 0; padding: 22px 16px; }
+    /* stack the mode cards full-width so each label fits cleanly */
+    .menuBtns{ flex-direction: column; gap: 10px; }
+    .modeBtn{ min-width: 0; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center;
+      gap: 4px 12px; padding: 16px 18px; text-align: left; }
+    .modeBtn .micon{ width: 26px; height: 26px; flex: 0 0 26px; }
+    .modeBtn .mName{ font-size: 17px; flex: 1; }
+    .modeBtn .mDesc{ font-size: 12px; flex: 1 0 100%; }
+    .stat{ padding: 5px 8px; } .stat b{ font-size: 15px; }
+    .iconBtn{ width: 34px; height: 34px; flex: 0 0 34px; }
     #mpScore{ padding: 10px 12px; } .mpTeam b{ font-size: 22px; } .mpTeam{ min-width: 60px; }
     .lbName{ font-size: 12.5px; } .lbAcc{ min-width: 50px; font-size: 11px; } .lbWL{ display: none; }
   }
@@ -534,6 +542,16 @@
   .modeBtn .micon{ width:30px; height:30px; color:var(--accent); }
   .lbMedal{ width:22px; height:22px; }
 
+  /* ===== Theme toggle (small icon button in the header) ===== */
+  .headerRight{ display:flex; align-items:center; gap:10px; margin-left:auto; align-self:flex-start; }
+  .iconBtn{ width:38px; height:38px; flex:0 0 38px; border:1px solid var(--stroke); border-radius:10px;
+    background:var(--card); color:var(--text); display:grid; place-items:center; cursor:pointer; padding:0; }
+  .iconBtn:hover{ border-color:var(--text); }
+  .iconBtn svg{ width:18px; height:18px; }
+  .iconBtn .ico-sun{ display:none; }
+  html[data-theme="dark"] .iconBtn .ico-sun{ display:block; }
+  html[data-theme="dark"] .iconBtn .ico-moon{ display:none; }
+
   /* ===== Dark theme (toggled from the menu) ===== */
   html[data-theme="dark"]{
     --text:#ece7dc; --muted:#928d81;
@@ -598,10 +616,16 @@
         <div class="sub">Stereo Tempo Matcher · Model BM-88</div>
       </div>
     </div>
-    <div class="stats">
-      <div class="stat"><b id="score">0</b><span>Score</span></div>
-      <div class="stat"><b id="streak">0</b><span>Streak</span></div>
-      <div class="stat"><b id="round">1</b><span>Song</span></div>
+    <div class="headerRight">
+      <button class="iconBtn" id="themeBtn" aria-label="Toggle dark mode" title="Light / dark mode">
+        <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>
+      </button>
+      <div class="stats">
+        <div class="stat"><b id="score">0</b><span>Score</span></div>
+        <div class="stat"><b id="streak">0</b><span>Streak</span></div>
+        <div class="stat"><b id="round">1</b><span>Song</span></div>
+      </div>
     </div>
   </header>
 
@@ -634,7 +658,6 @@
       </button>
     </div>
     <button class="btn next" id="leaderboardBtn" style="margin-top:16px;width:100%;">Leaderboard</button>
-    <button class="btn ghost" id="themeBtn" style="margin-top:10px;width:100%;">Dark mode</button>
     <div id="mpSetupNote" class="setupNote" hidden></div>
   </div>
 
@@ -2154,7 +2177,6 @@
   function applyTheme(t){
     const dark = t === 'dark';
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    themeBtn.textContent = dark ? 'Light mode' : 'Dark mode';
     try { localStorage.setItem('bm_theme', dark ? 'dark' : 'light'); } catch(e){}
   }
   themeBtn.onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
