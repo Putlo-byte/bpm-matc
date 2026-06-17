@@ -1008,8 +1008,24 @@
   // NOTE: browsers can't drive the Mac trackpad Taptic Engine, so this fakes the
   // feel with a short click + a thumb pop, plus navigator.vibrate() for phones.
   let tickCtx = null, lastTickPos = null, tickTimer = null, lastTickAt = 0;
+  // iOS Safari has no navigator.vibrate. Workaround: toggling a native
+  // <input type="checkbox" switch> (iOS 17.4+) fires the system haptic. We keep a
+  // hidden one and .click() it inside the drag's user-gesture. Only set up when
+  // vibrate is missing — that's exactly Safari (Chrome/Brave already buzz).
+  let iosHaptic = null;
+  if (!navigator.vibrate) {
+    const label = document.createElement("label");
+    const sw = document.createElement("input");
+    sw.type = "checkbox"; sw.setAttribute("switch", "");
+    // visually hidden but still rendered (display:none kills the haptic)
+    label.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;";
+    label.appendChild(sw);
+    document.body.appendChild(label);
+    iosHaptic = label;
+  }
   function tick(){
     if (navigator.vibrate) { try { navigator.vibrate(8); } catch(e){} } // real buzz on mobile, no-op on Mac
+    else if (iosHaptic) { try { iosHaptic.click(); } catch(e){} } // iOS Safari haptic via switch toggle
     try {
       if(!tickCtx) tickCtx = new (window.AudioContext || window.webkitAudioContext)();
       if(tickCtx.state === "suspended") tickCtx.resume();
