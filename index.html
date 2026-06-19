@@ -2526,7 +2526,8 @@
     const state = _randStr(8);
     try { localStorage.setItem('sp_verifier', verifier); localStorage.setItem('sp_state', state); } catch(e){}
     const p = new URLSearchParams({ response_type:'code', client_id:SPOTIFY_CLIENT_ID, scope:SPOTIFY_SCOPES,
-      redirect_uri:spotifyRedirect(), code_challenge_method:'S256', code_challenge:challenge, state });
+      redirect_uri:spotifyRedirect(), code_challenge_method:'S256', code_challenge:challenge, state,
+      show_dialog:'true' });   // force re-consent so the private-playlist scope is always re-granted
     location.href = 'https://accounts.spotify.com/authorize?' + p.toString();
   }
   async function spotifyExchange(code, verifier){
@@ -2639,8 +2640,13 @@
     spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">Loading…</div>';
     const rows = [ { kind:'top', name:'Your Top Songs' }, { kind:'liked', name:'Liked Songs' } ];
     try {
-      const d = await spotifyApi('me/playlists?limit=50');
-      (d.items||[]).forEach(p => { if(p && p.id) rows.push({ kind:'pl', id:p.id, name:p.name, count:(p.tracks&&p.tracks.total)||0 }); });
+      // paginate so playlists past the first 50 (incl. private ones) still show
+      let url = 'me/playlists?limit=50';
+      while(url && rows.length < 200){
+        const d = await spotifyApi(url);
+        (d.items||[]).forEach(p => { if(p && p.id) rows.push({ kind:'pl', id:p.id, name:p.name, count:(p.tracks&&p.tracks.total)||0 }); });
+        url = d.next ? d.next.replace('https://api.spotify.com/v1/','') : null;
+      }
     } catch(e){
       if(e && e.message === 'forbidden'){ spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">' + SP_FORBIDDEN_MSG + '</div>'; refreshSpotifyUI(); return; }
       if(!spotifyConnected()){ closeSpotifySheet(); refreshSpotifyUI(); return; }
