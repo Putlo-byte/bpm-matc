@@ -4,19 +4,20 @@
 
     "players": {
       ".read": true,
-      ".indexOn": ["wins"],
+      ".indexOn": ["wins", "bestStreak"],
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
-        ".validate": "newData.hasChild('games')",
-        "name":     { ".validate": "newData.isString() && newData.val().length <= 60" },
-        "photo":    { ".validate": "newData.isString() && newData.val().length <= 500" },
-        "wins":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "losses":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "games":    { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "accSum":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "accCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "updated":  { ".validate": "newData.isNumber()" },
-        "$other":   { ".validate": false }
+        ".validate": "newData.hasChildren()",
+        "name":       { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "photo":      { ".validate": "newData.isString() && newData.val().length <= 500" },
+        "wins":       { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "losses":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "games":      { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "accSum":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "accCount":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "bestStreak": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "updated":    { ".validate": "newData.isNumber()" },
+        "$other":     { ".validate": false }
       }
     },
 

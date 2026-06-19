@@ -159,6 +159,10 @@
   .plRow:hover { border-color: var(--accent); }
   .plRow .plName { font-weight: 700; font-size: 14px; }
   .plRow .plCount { font-size: 11px; color: var(--muted); }
+  .lbTabs { display: flex; gap: 8px; margin: 0 0 12px; }
+  .lbTab { flex: 1; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--stroke);
+    background: transparent; color: var(--muted); font-weight: 700; font-size: 13px; cursor: pointer; transition: .12s; }
+  .lbTab.active { background: var(--accent); color: #08130b; border-color: var(--accent); }
 
   /* ===== Matchmaking queue ===== */
   #queueView { text-align: center; padding: 38px 10px; }
@@ -643,9 +647,9 @@
         <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>
       </button>
       <div class="stats">
-        <div class="stat"><b id="score">0</b><span>Score</span></div>
-        <div class="stat"><b id="streak">0</b><span>Streak</span></div>
-        <div class="stat"><b id="round">1</b><span>Song</span></div>
+        <div class="stat" id="statScore"><b id="score">0</b><span>Score</span></div>
+        <div class="stat" id="statStreak"><b id="streak">0</b><span>Streak</span></div>
+        <div class="stat" id="statSong"><b id="round">1</b><span>Song</span></div>
       </div>
     </div>
   </header>
@@ -664,8 +668,13 @@
     <div class="menuBtns">
       <button class="modeBtn" id="spBtn">
         <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
-        <span class="mName">Singleplayer</span>
-        <span class="mDesc">Match songs solo and chase your high score.</span>
+        <span class="mName">Sandbox</span>
+        <span class="mDesc">Play around, no pressure — just match songs for fun.</span>
+      </button>
+      <button class="modeBtn" id="streakBtn">
+        <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c2.5 3 4 5.2 4 8a4 4 0 0 1-8 0c0-1 .3-2 .8-2.8C8.5 9 7 10.6 7 13a5 5 0 0 0 10 0c0-4-2.8-7.4-5-10z"/></svg>
+        <span class="mName">Streak Rush</span>
+        <span class="mDesc">How many songs can you nail within 10% in a row?</span>
       </button>
       <button class="modeBtn" id="mpBtn">
         <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16l2-9 5 4 5-4 2 9z"/><circle cx="12" cy="4.5" r="1.6"/></svg>
@@ -699,7 +708,11 @@
 
   <!-- ===== Leaderboard ===== -->
   <div id="leaderboardView" hidden>
-    <div class="lbTitle">Leaderboard — Most Wins</div>
+    <div class="lbTitle" id="lbTitle">Ranked — Most Wins</div>
+    <div class="lbTabs">
+      <button class="lbTab active" id="lbTabRanked">Ranked</button>
+      <button class="lbTab" id="lbTabStreak">Streak Rush</button>
+    </div>
     <div id="lbList" class="lbList">Loading…</div>
     <button class="btn ghost" id="lbBack" style="margin-top:14px;width:100%;">← Back to Menu</button>
   </div>
@@ -938,10 +951,11 @@
         trackRow=$("trackRow"), disc=$("disc"), songTitle=$("songTitle"), songArtist=$("songArtist"),
         loadNote=$("loadNote"), resultEl=$("result"), verdictEl=$("verdict"), detailEl=$("detail"),
         scoreEl=$("score"), streakEl=$("streak"), roundEl=$("round"),
+        statScore=$("statScore"), statStreak=$("statStreak"), statSong=$("statSong"),
         timerEl=$("timer"), ringFg=$("ringFg"), timerNum=$("timerNum");
   // menu / multiplayer DOM
   const menuView=$("menuView"), queueView=$("queueView"), playView=$("play"),
-        spBtn=$("spBtn"), mpBtn=$("mpBtn"), mpSetupNote=$("mpSetupNote"),
+        spBtn=$("spBtn"), streakBtn=$("streakBtn"), mpBtn=$("mpBtn"), mpSetupNote=$("mpSetupNote"),
         qTitle=$("qTitle"), qSub=$("qSub"), qCancel=$("qCancel"),
         spControls=$("spControls"), hintSP=$("hintSP"),
         mpScore=$("mpScore"), mpYouScore=$("mpYouScore"), mpOppScore=$("mpOppScore"), mpRoundLabel=$("mpRoundLabel"),
@@ -953,7 +967,8 @@
   // auth + leaderboard DOM
   const acctAvatar=$("acctAvatar"), acctName=$("acctName"), acctRecord=$("acctRecord"),
         signInBtn=$("signInBtn"), signOutBtn=$("signOutBtn"),
-        leaderboardBtn=$("leaderboardBtn"), leaderboardView=$("leaderboardView"), lbList=$("lbList"), lbBack=$("lbBack");
+        leaderboardBtn=$("leaderboardBtn"), leaderboardView=$("leaderboardView"), lbList=$("lbList"), lbBack=$("lbBack"),
+        lbTitle=$("lbTitle"), lbTabRanked=$("lbTabRanked"), lbTabStreak=$("lbTabStreak");
   // party DOM
   const partyBtn=$("partyBtn"),
         partyJoin=$("partyJoin"), partyJoinTitle=$("partyJoinTitle"), partyJoinSub=$("partyJoinSub"),
@@ -972,12 +987,14 @@
   player.loop = true; player.preload = "auto";
   setPreservesPitch(player, true); // change tempo, keep pitch = a true "BPM" change
 
-  const ROUND_SECONDS = 20;        // time to find the tempo before it auto-locks
-  let mode = null;                 // null | 'single' | 'multi'
+  const ROUND_SECONDS = 20;        // ranked/party time to find the tempo before it auto-locks
+  let mode = null;                 // null | 'sandbox' | 'streak' | 'multi' | 'party'
+  const isSolo = () => mode === 'sandbox' || mode === 'streak';
+  let soloSeconds = ROUND_SECONDS; // solo round length (Sandbox=30, Streak Rush=20)
   let poolIndex = 0;
   let targetPos = 50;     // hidden slider position that = original tempo (1.0x)
   let locked = false, ready = false, playing = false;
-  let score = 0, streak = 0, round = 1;
+  let score = 0, streak = 0, round = 1, bestStreak = 0;
   let lastArtist = "";
   const recent = new Set(), recentQ = [];   // track ids played recently, to avoid repeats
   let loadToken = 0;      // guards against out-of-order async loads
@@ -1115,14 +1132,14 @@
   // ---------- Countdown timer ----------
   ringFg.style.strokeDasharray = RING_C;
   function updateTimer(){
-    const frac = clamp(timeLeft / ROUND_SECONDS, 0, 1);
+    const frac = clamp(timeLeft / soloSeconds, 0, 1);
     ringFg.style.strokeDashoffset = (RING_C * (1 - frac)).toFixed(1);
     timerNum.textContent = Math.ceil(timeLeft);
     timerEl.classList.toggle("warn", timeLeft <= 10 && timeLeft > 5);
     timerEl.classList.toggle("danger", timeLeft <= 5);
   }
   function resetTimer(){
-    timeLeft = ROUND_SECONDS; roundActive = false;
+    timeLeft = soloSeconds; roundActive = false;
     timerEl.classList.remove("warn", "danger");
     updateTimer();
   }
@@ -1153,7 +1170,7 @@
   }
   function stopMpTimer(){ mpTicking = false; clearInterval(mpTimerId); }
   setInterval(() => {
-    if(mode === 'single' && playing && !locked && roundActive){
+    if(isSolo() && playing && !locked && roundActive){
       timeLeft = Math.max(0, timeLeft - 0.25);
       updateTimer();
       if(timeLeft <= 0) autoLock();
@@ -1305,27 +1322,35 @@
     slider.disabled = true; lockBtn.disabled = true;
     const err = Math.abs(parseFloat(slider.value) - targetPos); // ≈ % tempo off
     const rateAtLock = rateFromPos(parseFloat(slider.value));   // for "you guessed X BPM"
-
-    // ----- point system (steep high-accuracy reward; see scoreFor) -----
-    let pts = scoreFor(err);
+    const within = err <= 10;
     const perfect = err <= 1;
-    if (err <= 10){ streak++; pts += Math.min(streak, 5) * (perfect ? 5 : 2); } else streak = 0;
-    score += pts; scoreEl.textContent = score; streakEl.textContent = streak;
-
-    // ----- result readout: an accuracy %, green if scored / red if not -----
     const accuracy = Math.max(0, 100 - err);   // 100% = dead-on
-    const gotPoints = pts > 0;
-    const color = gotPoints ? "var(--good)" : "var(--bad)";
-    const sign = pts >= 0 ? "+" : "";
+
+    // ----- mode-specific scoring -----
+    let endedAt = 0;            // streak length to display if this lock ended a run
+    if (mode === 'streak'){
+      // count consecutive within-10% hits; a miss ends the run and starts over
+      if (within){ streak++; if (streak > bestStreak){ bestStreak = streak; recordStreak(streak); } }
+      else { endedAt = streak; streak = 0; }
+      streakEl.textContent = streak;
+    }
+    // Sandbox keeps no score/streak — it's just the accuracy readout.
+
+    // ----- result readout: an accuracy %, green if within / red if not -----
+    const color = within ? "var(--good)" : "var(--bad)";
     verdictEl.style.color = color;
-    _spLock = { color, sign, pts, rate: rateAtLock };
+    _spLock = { kind: mode, color, rate: rateAtLock, within, streak, endedAt };
     renderSpDetail();
     resultEl.classList.add("show");
     resultEl.classList.toggle("perfect", perfect);
     countTo(verdictEl, 100, accuracy);   // count down from 100% to the real accuracy
-    loadNote.textContent = perfect
-      ? "Bang on! Now playing at the original tempo."
-      : "Now playing at the original tempo — hear the difference.";
+    if (mode === 'streak' && !within){
+      loadNote.textContent = endedAt > 0 ? `Missed — streak ended at ${endedAt}. Starting over.` : "Missed — keep at it!";
+    } else {
+      loadNote.textContent = perfect
+        ? "Bang on! Now playing at the original tempo."
+        : "Now playing at the original tempo — hear the difference.";
+    }
 
     if (perfect) celebrate();
 
@@ -1347,14 +1372,20 @@
     setTimeout(()=>{ slider.value = dest; paintSlider(); applyRate(); }, dur + 120);
   }
 
-  // singleplayer result line: points + the song's real BPM (and what you guessed)
+  // solo result line: a mode-specific lead + the song's real BPM (and what you guessed)
   function renderSpDetail(){
     if(!_spLock) return;
-    const { color, sign, pts, rate } = _spLock;
+    const { kind, color, rate, within, streak, endedAt } = _spLock;
     const bpm = currentBPM
-      ? ` &nbsp;·&nbsp; <b>≈${Math.round(currentBPM)} BPM</b> <span style="color:var(--muted)">(you guessed ${Math.round(currentBPM * rate)})</span>`
+      ? `<b>≈${Math.round(currentBPM)} BPM</b> <span style="color:var(--muted)">(you guessed ${Math.round(currentBPM * rate)})</span>`
       : "";
-    detailEl.innerHTML = `<b style="color:${color}">${sign}${pts}</b> points${bpm}`;
+    let lead = "";
+    if(kind === 'streak'){
+      lead = within
+        ? `<b style="color:var(--good)">🔥 ${streak} in a row</b>`
+        : `<b style="color:var(--bad)">Streak ended${endedAt ? ' at ' + endedAt : ''}</b>`;
+    }
+    detailEl.innerHTML = lead && bpm ? (lead + " &nbsp;·&nbsp; " + bpm) : (lead || bpm);
   }
 
   // animate a number ticking from `from`% to `to`% with 2 decimals
@@ -1460,7 +1491,7 @@
 
   // spacebar = play / pause the music (in either mode)
   function toggleAudio(){
-    if(mode === 'single'){ if(ready) togglePlay(); }
+    if(isSolo()){ if(ready) togglePlay(); }
     else if(mode === 'multi' && ready){
       if(player.paused){ player.play().then(() => { playing = true; }).catch(() => {}); }
       else { player.pause(); playing = false; }
@@ -1491,20 +1522,28 @@
     if(fbInited) updateAcctUI();
   }
 
-  function startSingle(){
-    mode = 'single';
+  // shared solo layout for Sandbox + Streak Rush
+  function startSolo(which){
+    mode = which;
+    soloSeconds = (which === 'sandbox') ? 30 : 20;
     show(menuView, false); show(queueView, false); show(playView, true);
-    // singleplayer layout
     show(headerStats, true); show(backBtn, true);
     show(mpScore, false); show(trackRow, true); show(spControls, true); show(hintSP, true);
     show(mpControls, false); show(mpReveal, false); show(mpFinal, false); show(mpSkipBtn, false); show(mpSkipNote, false);
+    // Sandbox: just the song counter. Streak Rush: streak + song, no score.
+    show(statScore, false);
+    show(statStreak, which === 'streak');
+    show(statSong, true);
     resultEl.classList.remove("show", "perfect");
-    score = 0; streak = 0; round = 1; scoreEl.textContent = 0; streakEl.textContent = 0;
-    roundEl.textContent = 1;
+    score = 0; streak = 0; round = 1; bestStreak = 0;
+    scoreEl.textContent = 0; streakEl.textContent = 0; roundEl.textContent = 1;
     loadSong();
   }
+  function startSandbox(){ startSolo('sandbox'); }
+  function startStreak(){ startSolo('streak'); }
 
-  spBtn.onclick = startSingle;
+  spBtn.onclick = startSandbox;
+  streakBtn.onclick = startStreak;
   mpBtn.onclick = startMulti;
   partyBtn.onclick = () => createParty();
 
@@ -2048,6 +2087,19 @@
     _lbCache = null; // standings changed — force a fresh fetch next time the board opens
   }
 
+  // Streak Rush: save a new personal-best streak to this player's profile (needs sign-in)
+  function recordStreak(value){
+    if(!user || !db || !value) return;
+    db.ref('players/' + me).transaction(p => {
+      p = p || {};
+      p.name = myName(); p.photo = myPhoto();
+      p.bestStreak = Math.max(p.bestStreak || 0, value);
+      p.updated = Date.now();
+      return p;
+    });
+    _lbCacheStreak = null;
+  }
+
   function oppLeft(){
     stopMpTimer(); try{ player.pause(); }catch(e){} playing = false;
     show(mpControls, false); show(mpReveal, false); show(mpFinal, true);
@@ -2056,45 +2108,75 @@
     M.finished = true; recordResult('win', M.state);
   }
 
-  // ---- Leaderboard ----
-  // Small in-memory cache so re-opening the leaderboard within 30s doesn't re-query Firebase.
-  let _lbCache = null, _lbCacheAt = 0;
+  // ---- Leaderboard (two boards: Ranked wins / Streak Rush best streak) ----
+  // Small in-memory cache per board so quick re-opens don't re-query Firebase.
+  let _lbCache = null, _lbCacheAt = 0, _lbCacheStreak = null, _lbCacheStreakAt = 0, lbMode = 'ranked';
   const LB_CACHE_MS = 30000, LB_TOP_N = 50;
-  async function showLeaderboard(){
+  async function showLeaderboard(which){
     if(!ensureFirebase()){ showSetupNote(); return; }
+    if(which) lbMode = which;
     show(menuView, false); show(queueView, false); show(playView, false); show(leaderboardView, true);
     show(headerStats, false); show(backBtn, false);
-    // Serve a fresh cache straight away — avoids a redundant read on quick back-and-forth.
-    if(_lbCache && Date.now() - _lbCacheAt < LB_CACHE_MS){ renderLeaderboard(_lbCache); return; }
+    lbTabRanked.classList.toggle('active', lbMode === 'ranked');
+    lbTabStreak.classList.toggle('active', lbMode === 'streak');
+    lbTitle.textContent = lbMode === 'streak' ? "Streak Rush — Best Streak" : "Ranked — Most Wins";
+    if(lbMode === 'streak') return showStreakBoard();
+    return showRankedBoard();
+  }
+  async function showRankedBoard(){
+    if(_lbCache && Date.now() - _lbCacheAt < LB_CACHE_MS){ renderRanked(_lbCache); return; }
     lbList.innerHTML = '<div class="lbEmpty">Loading…</div>';
     try {
-      // Server-side: fetch ONLY the top N players by wins instead of the whole table.
-      // Requires ".indexOn": ["wins"] on /players in the DB rules — without it Firebase
-      // still downloads every record and filters client-side (defeating the optimization).
+      // Fetch only the top N by wins. Needs ".indexOn":["wins"] on /players (else Firebase
+      // downloads every record and filters client-side).
       const snap = await db.ref('players').orderByChild('wins').limitToLast(LB_TOP_N).get();
       const arr = [];
       snap.forEach(c => { const v = c.val() || {}; arr.push({ uid: c.key, name: v.name || 'Player', photo: v.photo || '', wins: v.wins || 0, losses: v.losses || 0, games: v.games || 0, accSum: v.accSum || 0, accCount: v.accCount || 0 }); });
-      // limitToLast returns ascending by wins; apply the full ranking on just these N rows.
       arr.sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.games - a.games);
-      _lbCache = arr; _lbCacheAt = Date.now();
-      renderLeaderboard(arr);
+      const ranked = arr.filter(p => p.games > 0);
+      _lbCache = ranked; _lbCacheAt = Date.now();
+      renderRanked(ranked);
+    } catch(e){ lbList.innerHTML = '<div class="lbEmpty">Couldn\'t load leaderboard.</div>'; }
+  }
+  async function showStreakBoard(){
+    if(_lbCacheStreak && Date.now() - _lbCacheStreakAt < LB_CACHE_MS){ renderStreak(_lbCacheStreak); return; }
+    lbList.innerHTML = '<div class="lbEmpty">Loading…</div>';
+    try {
+      const snap = await db.ref('players').orderByChild('bestStreak').limitToLast(LB_TOP_N).get();
+      const arr = [];
+      snap.forEach(c => { const v = c.val() || {}; if(v.bestStreak) arr.push({ uid: c.key, name: v.name || 'Player', photo: v.photo || '', bestStreak: v.bestStreak || 0 }); });
+      arr.sort((a, b) => b.bestStreak - a.bestStreak);
+      _lbCacheStreak = arr; _lbCacheStreakAt = Date.now();
+      renderStreak(arr);
     } catch(e){ lbList.innerHTML = '<div class="lbEmpty">Couldn\'t load leaderboard.</div>'; }
   }
 
-  function renderLeaderboard(arr){
-    if(!arr.length){ lbList.innerHTML = '<div class="lbEmpty">No games played yet — be the first to win!</div>'; return; }
+  function renderRanked(arr){
+    if(!arr.length){ lbList.innerHTML = '<div class="lbEmpty">No ranked games yet — play Ranked to get on the board!</div>'; return; }
     lbList.innerHTML = arr.map((p, i) => {
-      const medal = String(i + 1);
       const av = p.photo ? `<img class="lbAvatar" src="${p.photo}" alt="">` : `<div class="lbAvatar"></div>`;
       const mine = (user && p.uid === me) ? ' me' : '';
       const nm = String(p.name).replace(/[<>&]/g, '');
       const avg = p.accCount ? (p.accSum / p.accCount).toFixed(1) + '%' : '—';
-      return `<div class="lbRow${mine}"><div class="lbRank">${medal}</div>${av}` +
+      return `<div class="lbRow${mine}"><div class="lbRank">${i + 1}</div>${av}` +
              `<div class="lbName">${nm}${mine ? ' (you)' : ''}</div>` +
-             `<div class="lbAcc" title="Average accuracy">${avg}</div>` +
+             `<div class="lbAcc" title="Ranked avg accuracy">${avg}</div>` +
              `<div class="lbWins">${p.wins}W</div><div class="lbWL">${p.wins}-${p.losses}</div></div>`;
     }).join('');
   }
+  function renderStreak(arr){
+    if(!arr.length){ lbList.innerHTML = '<div class="lbEmpty">No streaks yet — play Streak Rush to claim the top spot!</div>'; return; }
+    lbList.innerHTML = arr.map((p, i) => {
+      const av = p.photo ? `<img class="lbAvatar" src="${p.photo}" alt="">` : `<div class="lbAvatar"></div>`;
+      const mine = (user && p.uid === me) ? ' me' : '';
+      const nm = String(p.name).replace(/[<>&]/g, '');
+      return `<div class="lbRow${mine}"><div class="lbRank">${i + 1}</div>${av}` +
+             `<div class="lbName">${nm}${mine ? ' (you)' : ''}</div>` +
+             `<div class="lbWins" title="Best Streak Rush run">🔥 ${p.bestStreak}</div></div>`;
+    }).join('');
+  }
+  lbTabRanked.onclick = () => showLeaderboard('ranked');
+  lbTabStreak.onclick = () => showLeaderboard('streak');
 
   // ============================================================
   //  PARTY MODE (link-based lobby, up to 8, no login)
@@ -2511,7 +2593,7 @@
     if(partySpotifyOpt){ partySpotifyOpt.hidden = false; partySpotifyOpt.textContent = "♫ " + name; }
     if(switchTo) poolIndex = PLAYLISTS.length - 1;
     buildChips();
-    if(switchTo && mode === 'single'){ round=1; score=0; streak=0; scoreEl.textContent=0; streakEl.textContent=0; loadSong(); }
+    if(switchTo && isSolo()){ round=1; score=0; streak=0; scoreEl.textContent=0; streakEl.textContent=0; loadSong(); }
     if(switchTo && mode === 'party' && party && party.role === 'host'){ partySource.value = 'spotify'; if(partySource.onchange) partySource.onchange(); }
     refreshSpotifyUI();
   }
