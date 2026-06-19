@@ -992,6 +992,7 @@
   const isSolo = () => mode === 'sandbox' || mode === 'streak';
   let soloSeconds = ROUND_SECONDS; // solo round length (Sandbox=30, Streak Rush=20)
   let poolIndex = 0;
+  let streakTimer = null;  // Streak Rush auto-advance to the next song after a lock
   let targetPos = 50;     // hidden slider position that = original tempo (1.0x)
   let locked = false, ready = false, playing = false;
   let score = 0, streak = 0, round = 1, bestStreak = 0;
@@ -1357,6 +1358,12 @@
     // make sure it's playing, then glide to the true tempo so they hear it snap into place
     if(!playing) startPlayback();
     animateTo(targetPos);
+
+    // Streak Rush has no Next Song button — auto-advance to keep the run going
+    if (mode === 'streak'){
+      clearTimeout(streakTimer);
+      streakTimer = setTimeout(() => { if(mode === 'streak' && locked){ round++; loadSong(); } }, 2800);
+    }
   }
 
   function animateTo(dest){
@@ -1514,7 +1521,7 @@
   const backBtn = $("backBtn");
   backBtn.onclick = showMenu;
   function showMenu(){
-    mode = null; cleanupQueue(); cleanupMatch(); leaveParty(); stopAllAudio();
+    mode = null; clearTimeout(streakTimer); cleanupQueue(); cleanupMatch(); leaveParty(); stopAllAudio();
     show(menuView, true); show(queueView, false); show(playView, false); show(leaderboardView, false);
     show(partyJoin, false); show(partyLobby, false);
     show(headerStats, false); show(backBtn, false);
@@ -1530,6 +1537,10 @@
     show(headerStats, true); show(backBtn, true);
     show(mpScore, false); show(trackRow, true); show(spControls, true); show(hintSP, true);
     show(mpControls, false); show(mpReveal, false); show(mpFinal, false); show(mpSkipBtn, false); show(mpSkipNote, false);
+    // Streak Rush: no "Next Song" — you must lock in every song (no skipping a hard one);
+    // it auto-advances after each lock. Sandbox keeps Next Song for free browsing.
+    clearTimeout(streakTimer);
+    show(nextBtn, which !== 'streak');
     // Sandbox: just the song counter. Streak Rush: streak + song, no score.
     show(statScore, false);
     show(statStreak, which === 'streak');
